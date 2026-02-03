@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>AMI / STEMI Territory Quest (GitHub Ready)</title>
+  <style>
+    :root { --bg:#0b1220; --card:#121a2b; --text:#e9eefc; --muted:#a9b4d6; --line:#25304a; }
+    body{ margin:0; font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; background:linear-gradient(180deg,#070b14,#0b1220); color:var(--text); }
+    .wrap{ max-width: 980px; margin: 0 auto; padding: 18px; }
+    .top{ display:flex; gap:14px; align-items:flex-start; flex-wrap:wrap; }
+    .card{ background:rgba(18,26,43,.92); border:1px solid var(--line); border-radius:16px; padding:16px; box-shadow:0 10px 30px rgba(0,0,0,.25); }
+    .hero{ flex:1 1 520px; }
+    .side{ flex:1 1 280px; }
+    h1{ margin:0 0 6px; font-size: 22px; }
+    .sub{ margin:0; color:var(--muted); line-height:1.35; }
+    .pillrow{ margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; }
+    .pill{ border:1px solid var(--line); background:rgba(255,255,255,.03); padding:8px 10px; border-radius:999px; font-size:13px; color:var(--muted); }
+    .btnrow{ margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; }
+    button{ cursor:pointer; border:1px solid var(--line); background:rgba(255,255,255,.06); color:var(--text); padding:10px 12px; border-radius:12px; font-weight:600; }
+    button:hover{ background:rgba(255,255,255,.10); }
+    button.primary{ background:rgba(99,102,241,.20); border-color:rgba(99,102,241,.55); }
+    button.primary:hover{ background:rgba(99,102,241,.28); }
+    .grid{ display:grid; gap:12px; margin-top:14px; }
+    .q{ font-size:18px; margin:0 0 10px; }
+    .choices{ display:grid; gap:10px; }
+    .choice{ text-align:left; padding:12px; border-radius:14px; border:1px solid var(--line); background:rgba(255,255,255,.04); }
+    .choice:hover{ background:rgba(255,255,255,.08); }
+    .meta{ display:flex; gap:10px; flex-wrap:wrap; color:var(--muted); font-size:13px; }
+    .badge{ border:1px solid var(--line); background:rgba(255,255,255,.03); padding:6px 10px; border-radius:999px; }
+    .feedback{ margin-top:12px; padding:12px; border-radius:14px; border:1px solid var(--line); background:rgba(255,255,255,.03); }
+    .ok{ border-color: rgba(34,197,94,.5); background:rgba(34,197,94,.08); }
+    .bad{ border-color: rgba(239,68,68,.5); background:rgba(239,68,68,.08); }
+    .explain{ margin:8px 0 0; color:var(--muted); line-height:1.45; }
+    .row{ display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; align-items:center; }
+    .progress{ height:10px; background:rgba(255,255,255,.06); border:1px solid var(--line); border-radius:999px; overflow:hidden; flex:1; min-width:220px; }
+    .bar{ height:100%; width:0%; background:rgba(99,102,241,.75); }
+    .footer{ margin-top:16px; color:var(--muted); font-size:12px; line-height:1.4; }
+    .kbd{ font-family: ui-monospace,SFMono-Regular,Menlo,monospace; border:1px solid var(--line); padding:2px 6px; border-radius:6px; background:rgba(255,255,255,.03); }
+    .small{ font-size:12px; color:var(--muted); }
+    details{ border:1px solid var(--line); border-radius:14px; padding:10px 12px; background:rgba(255,255,255,.02); }
+    summary{ cursor:pointer; font-weight:700; }
+    .two{ display:grid; gap:12px; grid-template-columns: 1fr; margin-top:12px; }
+    @media (min-width: 860px){ .two{ grid-template-columns: 1fr 1fr; } }
+    textarea{ width:100%; min-height:110px; border-radius:12px; border:1px solid var(--line); background:rgba(255,255,255,.03); color:var(--text); padding:10px; resize:vertical; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <section class="card hero">
+        <h1>AMI / STEMI Territory Quest</h1>
+        <p class="sub">
+          A quick learning game for nursing students: identify <b>NSTEMI vs STEMI</b>, key <b>ECG clues</b>, and common <b>STEMI territories</b> (inferior / lateral / anterior-septal).
+        </p>
+        <div class="pillrow">
+          <div class="pill">✅ No internet needed</div>
+          <div class="pill">✅ Works on GitHub Pages</div>
+          <div class="pill">✅ Explanations stay on screen</div>
+          <div class="pill">⌨️ Optional: press <span class="kbd">1</span>–<span class="kbd">4</span> to answer</div>
+        </div>
+        <div class="btnrow">
+          <button class="primary" id="startBtn">Start Game</button>
+          <button id="practiceBtn">Practice Mode (no score)</button>
+          <button id="resetBtn">Reset</button>
+        </div>
+      </section>
+
+      <aside class="card side">
+        <div class="meta">
+          <div class="badge">Score: <b id="score">0</b></div>
+          <div class="badge">Streak: <b id="streak">0</b></div>
+          <div class="badge">Mode: <b id="mode">—</b></div>
+        </div>
+        <div class="row">
+          <div class="progress" aria-label="progress"><div class="bar" id="bar"></div></div>
+          <div class="badge"><span id="idx">0</span>/<span id="total">0</span></div>
+        </div>
+
+        <div class="footer">
+          <b>Teacher tip:</b> After each question, ask students to justify their choice (1 sentence). Then click “Next”.
+        </div>
+      </aside>
+    </div>
+
+    <main class="grid">
+      <section class="card" id="screen">
+        <p class="sub">Click <b>Start Game</b> to begin. You can project this in class and let students answer in groups.</p>
+
+        <div class="two">
+          <details>
+            <summary>Mini Cheatsheet (for revision)</summary>
+            <div class="small" style="margin-top:8px; line-height:1.55;">
+              • <b>NSTEMI</b>: clot partly blocks blood flow; ECG can show <i>ST depression</i>, <i>T inversion</i>, sometimes transient ST elevation.<br/>
+              • <b>STEMI</b>: artery totally blocked; ECG shows ST elevation pattern; territories include <b>inferior</b>, <b>lateral</b>, <b>anterior/septal</b>.<br/>
+              • Symptoms: crushing/pressure chest pain, diaphoresis, nausea/vomiting, dyspnea, anxiety.<br/>
+            </div>
+          </details>
+
+          <details>
+            <summary>Reflection box (optional)</summary>
+            <div class="small" style="margin-top:8px;">
+              Ask students: “What would you do first in the first 2 minutes?” (ABC, monitor, IV access, ECG, notify team, etc.)
+            </div>
+            <textarea id="reflect" placeholder="Type your reflection here (optional). This stays only in the browser."></textarea>
+          </details>
+        </div>
+      </section>
+    </main>
+  </div>
+
+<script>
+(function(){
+  // Question bank built from the uploaded AMI notes:
+  // - NSTEMI definition & ECG signs (pages 22–23)
+  // - STEMI definition (page 24)
+  // - Types of STEMI territories: inferior / lateral / anterior-septal (page 25)
+  // - Typical pain + associated symptoms (pages 17–18)
+  const QUESTIONS = [
+    {
+      type: "mcq",
+      topic: "Core concept",
+      q: "NSTEMI usually means the clot is…",
+      choices: [
+        "Totally blocking a coronary artery (no blood gets through)",
+        "Partly blocking blood flow (some blood can still pass)",
+        "Not related to clots at all",
+        "Only caused by chest trauma"
+      ],
+      answer: 1,
+      why: "NSTEMI occurs when a clot partly blocks blood flow; there is still some room for blood to get through.",
+    },
+    {
+      type: "mcq",
+      topic: "Core concept",
+      q: "A STEMI happens when…",
+      choices: [
+        "One coronary artery is totally blocked, affecting ventricular electrical activity",
+        "Blood flow is partly blocked but stable",
+        "Only the atria are affected",
+        "Pain is always relieved by nitrates"
+      ],
+      answer: 0,
+      why: "STEMI is a heart attack where a coronary artery is totally blocked; it creates a distinct ECG pattern.",
+    },
+    {
+      type: "mcq",
+      topic: "ECG clues (NSTEMI)",
+      q: "Which ECG changes may suggest NSTEMI?",
+      choices: [
+        "ST depression and/or new T-wave inversion",
+        "Only tall peaked T waves (no other changes)",
+        "Only widened QRS complexes",
+        "Only normal ECG"
+      ],
+      answer: 0,
+      why: "NSTEMI ECG signs may include ST-segment depression and new T-wave inversion (and sometimes transient ST elevation).",
+    },
+    {
+      type: "mcq",
+      topic: "STEMI territories",
+      q: "From the STEMI territory concept, which option is a correct territory name?",
+      choices: [
+        "Inferior",
+        "Cervical",
+        "Renal",
+        "Occipital"
+      ],
+      answer: 0,
+      why: "Common STEMI territories include inferior, lateral, and anterior/septal.",
+    },
+    {
+      type: "mcq",
+      topic: "Symptoms",
+      q: "Classic AMI pain quality is often described as…",
+      choices: [
+        "Squeezing / crushing / heaviness / tightness / pressure",
+        "Sharp pain only when inhaling deeply",
+        "Itching sensation that improves with scratching",
+        "Pain that is always relieved by rest"
+      ],
+      answer: 0,
+      why: "AMI pain is often squeezing/crushing/heaviness/tightness/pressure and is typically not relieved by rest or nitrates.",
+    },
+    {
+      type: "mcq",
+      topic: "Associated symptoms",
+      q: "Which set best matches common associated symptoms in AMI?",
+      choices: [
+        "Dyspnea, nausea/vomiting, sweating, anxiety/apprehension",
+        "Frequent urination, blurred vision, hair loss",
+        "Rash and joint swelling only",
+        "No symptoms except fever"
+      ],
+      answer: 0,
+      why: "Common associated symptoms include dyspnea, nausea/vomiting, diaphoresis, and anxiety/apprehension.",
+    },
+    {
+      type: "scenario",
+      topic: "Scenario thinking",
+      q: "Scenario: A patient has crushing chest pain + diaphoresis. You suspect STEMI.\n\nPick the BEST statement to teach students about STEMI vs NSTEMI.",
+      choices: [
+        "NSTEMI means total blockage; STEMI means partial blockage.",
+        "STEMI means total blockage; NSTEMI is usually partial blockage.",
+        "They are the same condition; only the pain differs.",
+        "STEMI never shows ECG changes."
+      ],
+      answer: 1,
+      why: "Teaching point: STEMI = total occlusion; NSTEMI = partial occlusion (often ST depression/T inversion).",
+    },
+    {
+      type: "scenario",
+      topic: "Territory recall",
+      q: "Scenario: Your class is revising STEMI territories.\n\nWhich grouping is correct?",
+      choices: [
+        "Inferior / Lateral / Anterior-Septal",
+        "Superior / Medial / Posterior-Temporal",
+        "Renal / Hepatic / Splenic",
+        "Cranial / Thoracic / Pelvic"
+      ],
+      answer: 0,
+      why: "The common territory labels used in STEMI teaching include inferior, lateral, and anterior/septal.",
+    },
+  ];
+
+  // --- State ---
+  let mode = "—"; // "Game" or "Practice"
+  let order = [];
+  let i = 0;
+  let score = 0;
+  let streak = 0;
+  let locked = false;
+
+  // --- Elements ---
+  const screen = document.getElementById("screen");
+  const startBtn = document.getElementById("startBtn");
+  const practiceBtn = document.getElementById("practiceBtn");
+  const resetBtn = document.getElementById("resetBtn");
+
+  const scoreEl = document.getElementById("score");
+  const streakEl = document.getElementById("streak");
+  const modeEl = document.getElementById("mode");
+  const idxEl = document.getElementById("idx");
+  const totalEl = document.getElementById("total");
+  const barEl = document.getElementById("bar");
+
+  totalEl.textContent = String(QUESTIONS.length);
+
+  function shuffle(arr){
+    const a = arr.slice();
+    for(let k=a.length-1;k>0;k--){
+      const r = Math.floor(Math.random()*(k+1));
+      [a[k],a[r]]=[a[r],a[k]];
+    }
+    return a;
+  }
+
+  function setStats(){
+    scoreEl.textContent = String(score);
+    streakEl.textContent = String(streak);
+    modeEl.textContent = mode;
+    idxEl.textContent = String(i);
+    const pct = QUESTIONS.length ? Math.round((i/QUESTIONS.length)*100) : 0;
+    barEl.style.width = pct + "%";
+  }
+
+  function start(which){
+    mode = which;
+    order = shuffle([...Array(QUESTIONS.length).keys()]);
+    i = 0;
+    score = 0;
+    streak = 0;
+    locked = false;
+    setStats();
+    renderQuestion();
+  }
+
+  function renderQuestion(){
+    setStats();
+    const qi = order[i];
+    const item = QUESTIONS[qi];
+
+    if(!item){
+      renderFinish();
+      return;
+    }
+
+    const html = `
+      <div class="meta">
+        <div class="badge">Topic: <b>${escapeHtml(item.topic)}</b></div>
+        <div class="badge">Type: <b>${escapeHtml(item.type.toUpperCase())}</b></div>
+        <div class="badge">Hotkey: <b>1–4</b></div>
+      </div>
+
+      <div style="margin-top:12px">
+        <p class="q">${escapeHtml(item.q).replaceAll("\\n","<br/>")}</p>
+        <div class="choices" id="choices">
+          ${item.choices.map((c,idx)=>`
+            <button class="choice" data-idx="${idx}">
+              <b>${idx+1}.</b> ${escapeHtml(c)}
+            </button>
+          `).join("")}
+        </div>
+
+        <div id="feedback" class="feedback" style="display:none;"></div>
+
+        <div class="row">
+          <button id="nextBtn" class="primary" disabled>Next</button>
+          <button id="showBtn">Show Explanation</button>
+          <span class="small">Tip: Let students discuss first, then answer.</span>
+        </div>
+      </div>
+    `;
+    screen.innerHTML = html;
+
+    const choices = screen.querySelectorAll(".choice");
+    choices.forEach(btn=>{
+      btn.addEventListener("click", ()=> choose(parseInt(btn.getAttribute("data-idx"),10)));
+    });
+
+    document.getElementById("nextBtn").addEventListener("click", next);
+    document.getElementById("showBtn").addEventListener("click", ()=> showExplain(null, true));
+  }
+
+  function choose(pick){
+    if(locked) return;
+    locked = true;
+
+    const qi = order[i];
+    const item = QUESTIONS[qi];
+    const correct = pick === item.answer;
+
+    if(mode === "Game"){
+      if(correct){
+        score += 10;
+        streak += 1;
+      }else{
+        streak = 0;
+      }
+    }
+
+    showExplain(pick, false);
+    setStats();
+
+    const nextBtn = document.getElementById("nextBtn");
+    nextBtn.disabled = false;
+    nextBtn.focus();
+  }
+
+  function showExplain(pick, forced){
+    const qi = order[i];
+    const item = QUESTIONS[qi];
+    const fb = document.getElementById("feedback");
+
+    const correctIdx = item.answer;
+    const correctText = item.choices[correctIdx];
+
+    let title = "Explanation";
+    let cls = "";
+    let msg = "";
+
+    if(forced){
+      title = "Explanation (shown)";
+      cls = "";
+      msg = `
+        <div><b>Correct:</b> ${escapeHtml(correctText)}</div>
+        <div class="explain">${escapeHtml(item.why)}</div>
+      `;
+    }else{
+      const pickedText = item.choices[pick];
+      const ok = pick === correctIdx;
+      title = ok ? "✅ Correct!" : "❌ Not quite";
+      cls = ok ? "ok" : "bad";
+      msg = `
+        <div><b>Your choice:</b> ${escapeHtml(pickedText)}</div>
+        <div><b>Correct:</b> ${escapeHtml(correctText)}</div>
+        <div class="explain">${escapeHtml(item.why)}</div>
+      `;
+      // Visually mark buttons
+      const btns = screen.querySelectorAll(".choice");
+      btns.forEach((b,idx)=>{
+        if(idx === correctIdx) b.style.outline = "2px solid rgba(34,197,94,.8)";
+        if(idx === pick && idx !== correctIdx) b.style.outline = "2px solid rgba(239,68,68,.8)";
+        b.disabled = true;
+      });
+    }
+
+    fb.className = "feedback " + cls;
+    fb.innerHTML = `<b>${title}</b><div style="margin-top:8px">${msg}</div>`;
+    fb.style.display = "block";
+  }
+
+  function next(){
+    i += 1;
+    locked = false;
+    if(i >= QUESTIONS.length){
+      renderFinish();
+    }else{
+      renderQuestion();
+    }
+  }
+
+  function renderFinish(){
+    setStats();
+    const max = QUESTIONS.length * 10;
+    const pct = max ? Math.round((score/max)*100) : 0;
+
+    let comment = "Good revision!";
+    if(mode === "Practice") comment = "Nice practice session. Try Game mode for scoring.";
+    else if(pct >= 80) comment = "Excellent! Ready for quick-fire viva questions.";
+    else if(pct >= 60) comment = "Good. Revise NSTEMI ECG clues + STEMI territories.";
+    else comment = "Let’s repeat—focus on definitions and ECG clues.";
+
+    screen.innerHTML = `
+      <div class="meta">
+        <div class="badge">Mode: <b>${escapeHtml(mode)}</b></div>
+        <div class="badge">Final Score: <b>${score}</b> / ${max}</div>
+        <div class="badge">Result: <b>${pct}%</b></div>
+      </div>
+
+      <div class="feedback ok" style="margin-top:12px;">
+        <b>Finished!</b>
+        <div class="explain">${escapeHtml(comment)}</div>
+      </div>
+
+      <div class="row">
+        <button class="primary" id="againBtn">Play Again</button>
+        <button id="practiceAgainBtn">Practice Again</button>
+      </div>
+
+      <details style="margin-top:12px;">
+        <summary>Teacher: quick discussion prompts</summary>
+        <div class="small" style="margin-top:8px; line-height:1.55;">
+          1) “Explain NSTEMI vs STEMI in one sentence.”<br/>
+          2) “Name 3 STEMI territories.”<br/>
+          3) “Which ECG clues suggest NSTEMI?”<br/>
+          4) “What symptoms commonly come together with AMI pain?”<br/>
+        </div>
+      </details>
+
+      <div class="footer">
+        Tip: Put students into 3 groups — Group A (definitions), Group B (ECG), Group C (territories) — then rotate questions.
+      </div>
+    `;
+
+    document.getElementById("againBtn").addEventListener("click", ()=> start("Game"));
+    document.getElementById("practiceAgainBtn").addEventListener("click", ()=> start("Practice"));
+  }
+
+  function escapeHtml(s){
+    return String(s)
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  // Hotkeys 1-4
+  window.addEventListener("keydown", (e)=>{
+    if(!screen.querySelector("#choices")) return;
+    if(locked) return;
+    const key = e.key;
+    if(key === "1" || key === "2" || key === "3" || key === "4"){
+      const idx = parseInt(key,10)-1;
+      const btn = screen.querySelector(`.choice[data-idx="${idx}"]`);
+      if(btn) btn.click();
+    }
+  });
+
+  startBtn.addEventListener("click", ()=> start("Game"));
+  practiceBtn.addEventListener("click", ()=> start("Practice"));
+  resetBtn.addEventListener("click", ()=>{
+    mode = "—"; order=[]; i=0; score=0; streak=0; locked=false; setStats();
+    screen.innerHTML = `<p class="sub">Reset done. Click <b>Start Game</b> to begin again.</p>`;
+  });
+
+  // initial stats
+  setStats();
+})();
+</script>
+</body>
+</html>
